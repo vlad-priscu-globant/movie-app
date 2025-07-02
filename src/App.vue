@@ -1,33 +1,29 @@
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+<script lang="ts" setup>
+import { onMounted, ref } from "vue";
+import { fetchPopularMovies } from "./api/tmdb.ts";
+import type { SearchResult, SearchResults } from "./types/types.ts";
+
+const movies = ref<SearchResult[] | []>([])
+onMounted(async () => {
+  const data: SearchResults = await fetchPopularMovies(1);
+  console.log(data)
+  movies.value = data.results;
+})
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <div class="grid grid-cols-2 gap-4 p-4 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3">
+    <div v-for="movie in movies" :key="movie.id" class="rounded-lg overflow-hidden shadow hover:shadow-lg transition">
+      <img :alt="movie.title" :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`">
+      <div class="p-4">
+        <h2 class="text-lg font-semibold">{{movie.title}}</h2>
+        <p class="text-sm text-grey-400">Release: {{movie.release_date}}</p>
+        <p class="text-yellow-400 font-medium text-sm mt-1">⭐ {{ movie.vote_average.toFixed(1) }}</p>
+      </div>
+    </div>
   </div>
-  <HelloWorld msg="Vite + Vue" />
-  <h1 class="text-3xl font-bold underline">
-    Hello world!
-  </h1>
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
+
 </style>
