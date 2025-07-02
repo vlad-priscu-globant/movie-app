@@ -1,5 +1,5 @@
-const apiKey = import.meta.env.VITE_API_URL
-const baseUrl = import.meta.env.BASE_URL
+const apiKey = import.meta.env.VITE_API_KEY;
+const baseUrl = import.meta.env.VITE_BASE_URL;
 
 export async function fetchPopularMovies(page: number) {
   const res = await fetch(`${baseUrl}/movie/popular?page=${page}`, {
