@@ -1,26 +1,24 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
-import { fetchPopularMovies } from "./api/tmdb.ts";
-import type { SearchResult, SearchResults } from "./types/types.ts";
-
-const movies = ref<SearchResult[] | []>([])
-onMounted(async () => {
-  const data: SearchResults = await fetchPopularMovies(1);
-  console.log(data)
-  movies.value = data.results;
-})
+import MovieRating from "./components/partials/MovieRating.vue";
 </script>
 
 <template>
-  <div class="grid grid-cols-2 gap-4 p-4 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3">
-    <div v-for="movie in movies" :key="movie.id" class="rounded-lg overflow-hidden shadow hover:shadow-lg transition">
-      <img :alt="movie.title" :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`">
-      <div class="p-4">
-        <h2 class="text-lg font-semibold">{{movie.title}}</h2>
-        <p class="text-sm text-grey-400">Release: {{movie.release_date}}</p>
-        <p class="text-yellow-400 font-medium text-sm mt-1">⭐ {{ movie.vote_average.toFixed(1) }}</p>
-      </div>
-    </div>
+  <div class="min-h-screen bg-black text-white font-sans">
+    <header class="flex justify-between items-center p-4 bg-gradient-to-b from-black via-gray-900 to-transparent">
+      <RouterLink to="/"><h1 class="text-3xl font-bold text-red-600">MovieApp</h1></RouterLink>
+      <nav class="flex gap-6">
+        <RouterLink to="/upcoming" class="hover:underline">Upcoming</RouterLink>
+        <button class="text-sm bg-red-600 px-4 py-1 rounded hover:bg-red-700">Login</button>
+      </nav>
+    </header>
+
+    <main class="p-4">
+      <RouterView />
+    </main>
+
+    <footer class="text-center text-gray-500 text-sm p-4 border-t border-gray-700">
+      © 2025 MovieApp.
+    </footer>
   </div>
 </template>
 

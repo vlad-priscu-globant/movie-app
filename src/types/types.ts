@@ -10,6 +10,7 @@ export interface SearchResult {
   vote_average: number;
   vote_count: number;
   genre_ids?: string[]
+  overview?: string;
 }
 export interface SearchResults {
   page: number;
