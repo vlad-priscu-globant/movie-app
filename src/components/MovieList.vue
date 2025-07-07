@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import { onMounted, ref, watch } from "vue";
+import { defineAsyncComponent, onMounted, ref, watch } from "vue";
 import type { SearchResult, SearchResults } from "../types/types.ts";
 import { fetchPopularMovies } from "../api/tmdb.ts";
 import { movieStore } from "../stores/movieStore.ts";
 import { storeToRefs } from "pinia";
 
 const movies = ref<SearchResult[] | []>([])
+const MovieRating = defineAsyncComponent(() => import("./partials/MovieRating.vue"))
 onMounted(async () => {
   const data: SearchResults = await fetchPopularMovies(1);
   movies.value = data.results;
@@ -27,7 +28,7 @@ watch(searchList, async (newValue) => {
     return;
   }
  
-  movies.value = newValue.results as SearchResult[];
+  movies.value = newValue.results as unknown as SearchResult[];
 })
 </script>
 
@@ -40,7 +41,7 @@ watch(searchList, async (newValue) => {
         <div class="p-4">
           <h2 class="text-lg font-semibold">{{ movie.title }}</h2>
           <p class="text-sm text-grey-400">Release: {{ movie.release_date }}</p>
-          <p class="text-yellow-400 font-medium text-sm mt-1">⭐ {{ movie.vote_average.toFixed(1) }}</p>
+          <MovieRating :movie="movie"></MovieRating>
         </div>
       </RouterLink>
     </div>

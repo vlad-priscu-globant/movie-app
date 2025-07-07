@@ -1,14 +1,13 @@
 <script lang="ts" setup>
 import type { SearchResult } from "../types/types.ts";
-import { onMounted, ref } from "vue";
+import { defineAsyncComponent, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import { fetchMovieById } from "../api/tmdb.ts";
-import MovieRating from "./partials/MovieRating.vue";
 import { movieStore } from "../stores/movieStore.ts";
 
 const movie = ref<SearchResult | null>(null)
 const route = useRoute()
 const {fetchMovie} = movieStore();
+const MovieRating = defineAsyncComponent(() => import("./partials/MovieRating.vue"))
 onMounted(async () => {
   try {
    movie.value = await fetchMovie(Number(route.params.id));
