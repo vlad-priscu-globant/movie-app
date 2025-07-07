@@ -11,17 +11,23 @@ onMounted(async () => {
   movies.value = data.results;
 })
 const store = movieStore();
-const {searchList} = storeToRefs(store)
-watch(searchList, async (newValue, oldValue) => {
-  if (newValue) {
-    //TODO asa nu dar merge.
-    movies.value = newValue.results as unknown as SearchResult[];
-  }
-  const emptySearchCheck = newValue.results as unknown as Array<any>;
-  if (!emptySearchCheck.length) {
+const {searchList, searchQuery} = storeToRefs(store)
+watch(searchList, async (newValue) => {
+ 
+  if (!searchQuery.value) {
     const data: SearchResults = await fetchPopularMovies(1);
     movies.value = data.results;
+    return;
   }
+
+  if (Array.isArray(newValue.results) && newValue.results.length === 0 && searchQuery.value) {
+    alert('Niciun rezultat gasit. Ne intoarcem la pagina principala');
+    const data: SearchResults = await fetchPopularMovies(1);
+    movies.value = data.results;
+    return;
+  }
+ 
+  movies.value = newValue.results as SearchResult[];
 })
 </script>
 

@@ -17,6 +17,7 @@ export const movieStore = defineStore('movieStore', () => {
    */
   const movieCache = ref<Record<any, SearchResult>>({})
   const searchList = ref<Record<any, SearchResult>>({})
+  const searchQuery = ref<string>("")
 
   async function fetchMovie(id: number): Promise<SearchResult> {
     if (movieCache.value[id]) {
@@ -28,10 +29,11 @@ export const movieStore = defineStore('movieStore', () => {
   }
 
   async function searchMovieList(query: string): Promise<SearchResult> {
+    searchQuery.value = query;
     const data = await searchMovie(query);
     searchList.value = data;
     return data;
   }
 
-  return {movieCache, fetchMovie, searchList, searchMovieList}
+  return {movieCache, fetchMovie, searchList, searchMovieList, searchQuery}
 })
