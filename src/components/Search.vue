@@ -22,7 +22,7 @@ function clearSearch() {
 
 <template>
   <div
-    class="group relative w-fit mx-auto mt-6"
+    class="group relative w-fit mx-auto"
   >
     <input
       v-model="searchQuery"
