@@ -5,23 +5,20 @@ import { addWatchList, fetchWatchListItem, removeFromWatchList } from "../api/lo
 
 const props = defineProps<{
   movie:Partial<SearchResult>
-  readOnly: {
-    type: String,
-    default: true
-  }
+  readOnly?: boolean
   }>()
 
 //TODO how to make this without adding a default id
 const localItem = ref<Partial<SearchResult>>({id: 0})
 onMounted(async () => {
 
-  //TODO if readOnly - do not make the call
-  try {
-    localItem.value =  await fetchWatchListItem(Number(props.movie.id));
-  } catch (err) {
-    console.error(err)
+  if (!props.readOnly) {
+    try {
+     localItem.value =  await fetchWatchListItem(Number(props.movie.id));
+   } catch (err) {
+     console.error(err)
   }
-})
+}})
 
 //TODO prevent refresh
 function handleAddToFavorite(item: number | null | undefined) {
