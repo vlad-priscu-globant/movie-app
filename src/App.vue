@@ -1,6 +1,13 @@
 <script lang="ts" setup>
 import Search from "./components/Search.vue";
 import { SpeedInsights } from '@vercel/speed-insights/vue';
+import { fakeLogin } from "./api/localDb.ts";
+
+async function handleLogin() {
+  const res = await fakeLogin();
+  localStorage.setItem("token", res.token);
+  console.log('after login', res.token)
+}
 </script>
 
 <template>
@@ -10,7 +17,7 @@ import { SpeedInsights } from '@vercel/speed-insights/vue';
       <nav class="flex gap-6">
         <Search></Search>
         <RouterLink class="hover:underline" to="/upcoming" v-if="false">Upcoming</RouterLink>
-        <button class="text-sm bg-red-600 px-4 py-1 rounded hover:bg-red-700">Login</button>
+        <button class="text-sm bg-red-600 px-4 py-1 rounded hover:bg-red-700" @click="handleLogin">Login</button>
       </nav>
     </header>
     <main class="p-4">

@@ -10,10 +10,21 @@ const routes = [
     name: 'MovieDetail',
     component: () => import("../components/MovieDetail.vue"),
     props: true,
+    meta: { requiresAuth: true },
   },
 ]
 
 export const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+router.beforeEach((to, from, next) => {
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const token = localStorage.getItem('token')
+
+  if (requiresAuth && !token) {
+    return next('/login')
+  }
+
+  return next()
 })

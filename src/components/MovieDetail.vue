@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import type { SearchResult } from "../types/types.ts";
-import { defineAsyncComponent, onMounted, ref } from "vue";
+import { defineAsyncComponent, onMounted, ref, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import { movieStore } from "../stores/movieStore.ts";
 import FavoriteItem from "./FavoriteItem.vue";
 
-const movie = ref<SearchResult | null>(null)
+const movie = ref<Partial<SearchResult> | null>(null)
 const route = useRoute()
 const {fetchMovie} = movieStore();
 const MovieRating = defineAsyncComponent(() => import("./partials/MovieRating.vue"))
@@ -16,6 +16,12 @@ onMounted(async () => {
     console.error(err)
   }
 })
+// const route = useRoute()
+// watchEffect(() => {
+//   if (movie?.id) {
+//     movie.value = { ...movie } // clone to break reactivity ties
+//   }
+// })
 </script>
 
 <template>
@@ -30,7 +36,7 @@ onMounted(async () => {
         <h2 class="text-3xl font-bold mb-2">{{ movie.title }}</h2>
         <MovieRating :movie="movie"></MovieRating>
         <p v-if="movie.overview" class="text-gray-300 leading-relaxed">{{ movie.overview }}</p>
-        <FavoriteItem :movie="movie"></FavoriteItem>
+        <FavoriteItem v-if="movie" :movie="movie" :readOnly="false"></FavoriteItem>
       </div>
     </div>
     <p v-else class="text-center mt-20 text-gray-400">Loading...</p>

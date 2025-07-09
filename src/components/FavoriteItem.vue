@@ -13,6 +13,7 @@ const localItem = ref<Partial<SearchResult>>({id: 0})
 onMounted(async () => {
 
   if (!props.readOnly) {
+    //TODO check because this is not working
     try {
      localItem.value =  await fetchWatchListItem(Number(props.movie.id));
    } catch (err) {
@@ -20,7 +21,6 @@ onMounted(async () => {
   }
 }})
 
-//TODO prevent refresh
 function handleAddToFavorite(item: number | null | undefined) {
   if(item) {
     addWatchList(props.movie)
@@ -28,10 +28,10 @@ function handleAddToFavorite(item: number | null | undefined) {
   }
 }
 
-function handleremoveFromFavorite(item: number | null | undefined) {
+async function handleremoveFromFavorite(item: number | null | undefined) {
   if(item) {
-    removeFromWatchList(props.movie)
-    localItem.value.id = item
+    await removeFromWatchList(props.movie)
+    localItem.value.id = 0
   }
 }
 </script>

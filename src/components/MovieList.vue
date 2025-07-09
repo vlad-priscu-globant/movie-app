@@ -44,7 +44,6 @@ watch(searchList, async (newValue) => {
           <h2 class="text-lg font-semibold">{{ movie.title }}</h2>
           <p class="text-sm text-grey-400">Release: {{ movie.release_date }}</p>
           <MovieRating :movie="movie"></MovieRating>
-          <FavoriteItem :movie="movie" :read-only="true"></FavoriteItem>
         </div>
       </RouterLink>
     </div>
