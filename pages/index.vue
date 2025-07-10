@@ -23,7 +23,7 @@ watchEffect(() => {
 
       <NuxtLink :to="`movie/${movie.id}`">
         <div >
-          <img :alt="movie.title" :src="`https://image.tmdb.org/t/p/w500/${movie.poster_path}`">
+          <img :alt="movie.title" :src="`https://image.tmdb.org/t/p/w500/${movie.poster_path}`" class="w-full aspect-[2/3] object-cover" loading="lazy">
           <div class="p-4">
             <h2 class="text-lg font-semibold">{{ movie.title }}</h2>
             <p class="text-sm text-grey-400">Release: {{ movie.release_date }}</p>

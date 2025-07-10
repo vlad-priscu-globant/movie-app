@@ -28,7 +28,8 @@ watchEffect(() => {
       <img
         :alt="movie.title"
         :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`"
-        class="rounded w-full md:w-1/3"
+        class="rounded w-full md:w-1/3 aspect-[2/3] object-cover"
+        loading="lazy"
       />
       <div>
         <h2 class="text-3xl font-bold mb-2">{{ movie.title }}</h2>
