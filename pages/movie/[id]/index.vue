@@ -1,19 +1,14 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { SearchResult } from "~/types/types";
 
 const route = useRoute()
 
-// When accessing /posts/1, route.params.id will be 1
-console.log(route.params.id)
-const movie = ref<SearchResult[] | []>([])
+const movie = ref<SearchResult | null>(null)
 
-// const {data, error, pending} = await useFetch(`https://api.themoviedb.org/3/movie/popular?api_key=${api}&language=en-US&page=1`)
-// const movies = ref<SearchResult[] | []>([])
 
-const { data, error, pending } = await useFetch<SearchResult[]>('/api/movie/'+route.params.id)
+const {data, error, pending} = await useFetch<SearchResult>('/api/movie/' + route.params.id)
 
 watchEffect(() => {
-  console.log(data.value)
   if (data.value) {
     movie.value = data.value
   }
