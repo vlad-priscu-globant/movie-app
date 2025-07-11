@@ -30,7 +30,7 @@ watchEffect(() => {
         <h2 class="text-3xl font-bold mb-2">{{ movie.title }}</h2>
         <MovieRating :movie="movie"></MovieRating>
         <p v-if="movie.overview" class="text-gray-300 leading-relaxed">{{ movie.overview }}</p>
-
+        <FavoriteMovie v-if="movie" :movie="movie" :readOnly="false"></FavoriteMovie>
       </div>
     </div>
     <p v-else class="text-center mt-20 text-gray-400">Loading...</p>

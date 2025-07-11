@@ -12,6 +12,7 @@
   "dependencies": {
     "@nuxt/eslint": "^1.5.2",
     "@nuxt/image": "^1.10.0",
+    "@nuxtjs/supabase": "^1.5.3",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "@vercel/speed-insights": "^1.2.0",
     "eslint": "^9.30.1",
