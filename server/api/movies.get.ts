@@ -1,6 +1,8 @@
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const url = `${config.public.NUXT_PUBLIC_BASE_URL}movie/popular?api_key=${config.API_KEY}&language=en-US&page=1`
+  const query = getQuery(event)
+  const page = query.page ? Number(query.page) : 1
+  const url = `${config.public.NUXT_PUBLIC_BASE_URL}movie/popular?api_key=${config.API_KEY}&language=en-US&page=${page}`
 
   try {
     const movies = await $fetch(url, {
