@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const id = event.context.params?.id
-  const url = `${config.public.NUXT_PUBLIC_BASE_URL}movie/${id}`
+  const url = `${config.public.NUXT_PUBLIC_BASE_URL}/movie/${id}`
   try {
     const movie = await $fetch(url, {
       headers: {

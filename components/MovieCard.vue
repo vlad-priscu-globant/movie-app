@@ -17,6 +17,7 @@ const props = defineProps<{
         <div class="p-4">
           <h2 class="text-lg font-semibold">{{ props.movie.title }}</h2>
           <p class="text-sm text-grey-400">Release: {{ props.movie.release_date }}</p>
+          <p class="text-sm text-yellow-500">Rating: {{ props.movie.vote_average ?? 'N/A' }} ({{ props.movie.vote_count ?? 0 }} votes)</p>
         </div>
       </div>
     </NuxtLink>
