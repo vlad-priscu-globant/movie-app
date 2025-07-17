@@ -24,6 +24,7 @@ function onClear() {
       class="transition-all duration-300 ease-in-out bg-neutral-800 text-white pl-4 pr-10 py-2 border-2 border-transparent rounded-full focus:outline-none focus:w-64 w-10 group-hover:w-64 cursor-pointer h-10 relative z-10"
       placeholder="Search..."
       type="text"
+      @keydown.enter="onSubmit"
     />
     <button
       type="button"
