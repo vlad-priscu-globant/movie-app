@@ -1,12 +1,9 @@
 <script lang="ts" setup>
-import { onMounted } from 'vue'
 import { useSearch } from '~/composables/useSearch'
 
 const { results, loading, showCustomAlert, alertMessage, fetchPopularMovies } = useSearch()
 
-onMounted(() => {
-  fetchPopularMovies()
-})
+await fetchPopularMovies()
 </script>
 
 <template>
