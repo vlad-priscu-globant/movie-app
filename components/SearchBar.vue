@@ -1,14 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 const input = ref('')
 const emit = defineEmits(['search'])
 
-const canSubmit = computed(() => input.value.length >= 3)
-
 function onSubmit() {
-  if (canSubmit.value) {
-    emit('search', input.value)
-  }
+  emit('search', input.value)
 }
 
 function onClear() {
@@ -28,10 +24,8 @@ function onClear() {
     />
     <button
       type="button"
-      :disabled="!canSubmit"
       @click="onSubmit"
-      class="ml-[-2.5rem] z-20 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-200"
-      :class="canSubmit ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer' : 'bg-gray-600 text-gray-300 cursor-not-allowed'"
+      class="ml-[-2.5rem] z-20 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-200 bg-red-600 hover:bg-red-700 text-white cursor-pointer"
       aria-label="Submit search"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

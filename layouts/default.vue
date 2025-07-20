@@ -2,54 +2,47 @@
 import { ref } from 'vue'
 const user = await useSupabaseUser();
 import { useRouter } from 'vue-router'
-import { useSearch } from '~/composables/useSearch'
-const { searchQuery, results, loading, error } = useSearch()
+import { storeToRefs } from 'pinia'
+import { useMovieStore } from '~/composables/movieStore'
+const movieStore = useMovieStore()
+const { searchQuery } = storeToRefs(movieStore)
 const showCustomAlert = ref(false)
 const alertMessage = ref('')
 const router = useRouter()
 
-async function handleSearch(query) {
-  searchQuery.value = query
-  let url = '/api/movies'
-  if (query && query.length >= 3) {
-    url += `?query=${encodeURIComponent(query)}`
-  }
-  try {
+async function handleSearch(query: string) {
+  await movieStore.searchMovies(query, async (q: string) => {
+    const url = q ? `/api/movies?query=${encodeURIComponent(q)}` : '/api/movies?page=1'
     const res = await fetch(url)
     const data = await res.json()
-    if (data && Array.isArray(data.results)) {
-      if (data.results.length === 0 && query) {
-        alertMessage.value = 'No results found. Going back to the front page!';
-        showCustomAlert.value = true;
-        setTimeout(() => {
-          showCustomAlert.value = false;
-          router.push('/')
-        }, 2500);
-        searchQuery.value = ''
-        // Fetch popular movies
-        const resPopular = await fetch('/api/movies?page=1')
-        const popularData = await resPopular.json()
-        results.value = popularData.results || []
-        return;
-      }
-      results.value = data.results
-    } else {
-      results.value = []
-    }
-  } catch (e) {
-    results.value = []
+    return Array.isArray(data.results) ? data.results : []
+  })
+  if (query && movieStore.searchResults.length === 0) {
+    alertMessage.value = 'No results found. Going back to the front page!';
+    showCustomAlert.value = true;
+    setTimeout(() => {
+      showCustomAlert.value = false;
+      router.push('/')
+    }, 2500);
+    await movieStore.searchMovies('', async () => {
+      const res = await fetch('/api/movies?page=1')
+      const data = await res.json()
+      return Array.isArray(data.results) ? data.results : []
+    })
+    searchQuery.value = ''
   }
 }
 
 async function handleClear() {
-  searchQuery.value = ''
+  movieStore.clearSearch()
   alertMessage.value = ''
   showCustomAlert.value = false
   router.push('/')
-  // Fetch popular movies
-  const resPopular = await fetch('/api/movies?page=1')
-  const popularData = await resPopular.json()
-  results.value = popularData.results || []
+  await movieStore.searchMovies('', async () => {
+    const res = await fetch('/api/movies?page=1')
+    const data = await res.json()
+    return Array.isArray(data.results) ? data.results : []
+  })
 }
 </script>
 <template>
