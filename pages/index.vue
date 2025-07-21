@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import type { SearchResult, SearchResults } from "~/types/types";
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import type { SearchResult } from '../types/types'
 import { ref, watch, computed } from "vue";
 import Pagination from "~/components/Pagination.vue";
 
