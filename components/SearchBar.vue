@@ -1,7 +1,22 @@
 <script setup>
-import { ref, computed } from 'vue'
-const input = ref('')
-const emit = defineEmits(['search'])
+import { ref, computed, watch } from 'vue'
+const props = defineProps({
+  input: {
+    type: String,
+    default: ''
+  }
+})
+const emit = defineEmits(['search', 'clear', 'update:input'])
+
+const input = ref(props.input)
+
+watch(() => props.input, (val) => {
+  input.value = val
+})
+
+watch(input, (val) => {
+  emit('update:input', val)
+})
 
 const canSubmit = computed(() => input.value.length >= 3)
 
@@ -13,7 +28,7 @@ function onSubmit() {
 
 function onClear() {
   input.value = ''
-  emit('search', '')
+  emit('clear')
 }
 </script>
 
