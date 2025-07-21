@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { SearchResult } from '../types/types'
+import Filtering from '../components/filtering.vue'
 
 const movies = ref<SearchResult[] | []>([])
 const showCustomAlert = ref(false)
@@ -9,6 +10,33 @@ const alertMessage = ref('')
 const isSearching = ref(false)
 const router = useRouter()
 
+const sortOrder = ref('desc')
+const selectedGenre = ref(0)
+
+const filteredAndSortedMovies = computed(() => {
+  return movies.value
+    .filter(movie => {
+      if (selectedGenre.value === 0) {
+        return true
+      }
+      return movie.genre_ids.some(id => Number(id) === selectedGenre.value)
+    })
+    .sort((a, b) => {
+      if (sortOrder.value === 'asc') {
+        return a.vote_average - b.vote_average
+      } else if(sortOrder.value === 'desc') {
+        return b.vote_average - a.vote_average
+      } else if (sortOrder.value === 'popular') {
+        return b.popularity - a.popularity
+      }
+      return 0
+    })
+})
+
+function onFilterChange({sortOrder: newSortOrder, genres}: {sortOrder: string, genres: number[]}) {
+  sortOrder.value = newSortOrder
+  selectedGenre.value = genres[0] || 0
+}
 
 fetchMovies()
 
@@ -40,13 +68,11 @@ async function fetchMovies(query = '') {
     movies.value = []
   }
 }
-
-
 </script>
 
 <template>
   <div>
-
+    <Filtering @filterChange="onFilterChange" />
     <transition name="fade">
       <div v-if="showCustomAlert" class="fixed left-1/2 top-8 transform -translate-x-1/2 z-50">
         <div
@@ -60,7 +86,7 @@ async function fetchMovies(query = '') {
       </div>
     </transition>
     <div class="grid grid-cols-2 gap-4 p-4 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3">
-      <div v-for="movie in movies" :key="movie.id">
+      <div v-for="movie in filteredAndSortedMovies" :key="movie.id">
         <MovieCard :movie="movie"/>
       </div>
     </div>
