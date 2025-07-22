@@ -19,11 +19,12 @@ const handleScroll = () => {
     window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
     hasMore.value
   ) {
+
     fetchMovies()
   }
 }
 
-const fetchMovies = async (reset = false) => {
+const fetchMovies = async () => {
   if (loading.value || !hasMore.value) return
   loading.value = true
   let url = ''
@@ -33,15 +34,11 @@ const fetchMovies = async (reset = false) => {
     url = `/api/movies?page=${page.value}`
   }
   try {
-    const {data, pending, error} = await useLazyFetch<SearchResults>(url)
-    const movieList = data as any
-    if (reset) {
-      searchResults.value = []
-      page.value = 1
-      hasMore.value = true
-    }
-    if (movieList && movieList.results && Array.isArray(movieList.results)) {
-      if (movieList.results.length === 0 && isSearching.value) {
+
+    const {data, pending, error} = await useLazyFetch<SearchResults>(url, {server: true})
+    searchResults.value = data.value.results as any;
+    if (data.value && data.value.results && Array.isArray(data.value.results)) {
+      if (data.value.results.length === 0 && isSearching.value) {
         alertMessage.value = 'No results found. Going back to the front page!';
         showCustomAlert.value = true;
         setTimeout(() => { showCustomAlert.value = false }, 2500);
@@ -49,16 +46,16 @@ const fetchMovies = async (reset = false) => {
         searchQuery.value = '';
         page.value = 1;
 
-        const resPopular = await fetch(`/api/movies?page=1`);
-        const popularData = await resPopular.json();
+        const {data, pending, error} = await useLazyFetch(`/api/movies?page=1`, {server: false});
+        const popularData: SearchResults = data;
         searchResults.value = popularData.results || [];
         hasMore.value = popularData.page < popularData.total_pages;
         loading.value = false;
         return;
       }
-      searchResults.value.push(...movieList.results)
+      searchResults.value.push(...data.value.results)
       page.value += 1
-      hasMore.value = movieList.page < movieList.total_pages
+      hasMore.value = data.value.page < data.value.total_pages
     } else {
       hasMore.value = false
     }
@@ -79,7 +76,7 @@ onMounted(() => {
 
 // Watch for empty search results after a search
 watch([searchResults, searchQuery], async ([results, query]) => {
-  if (query && results.length === 0) {
+  if (query && results?.length === 0) {
     alertMessage.value = 'No results found. Going back to the front page!';
     showCustomAlert.value = true;
     setTimeout(() => { showCustomAlert.value = false }, 2500);

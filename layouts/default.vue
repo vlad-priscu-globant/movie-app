@@ -17,7 +17,7 @@ async function handleSearch(query: string) {
     const data = await res.json()
     return Array.isArray(data.results) ? data.results : []
   })
-  if (query && movieStore.searchResults.length === 0) {
+  if (query && movieStore.searchResults?.length === 0) {
     alertMessage.value = 'No results found. Going back to the front page!';
     showCustomAlert.value = true;
     setTimeout(() => {
