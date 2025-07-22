@@ -1,17 +1,28 @@
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
+  const page = Number(getQuery(event).page) || 1
+  const sort = getQuery(event).sort || ''
+  const genreId = getQuery(event).genreId || ''
 
-  const query = getQuery(event).query
-
-  let url
-
-  // Verifica type ul query-ului si daca are cel putin 3 caractere seteaza url-ul la endpoint ul cu query inclus
-  if (typeof query === 'string' && query.length >= 3) {
-    url = `${config.public.NUXT_PUBLIC_BASE_URL}search/movie?api_key=${config.API_KEY}&language=en-US&query=${encodeURIComponent(query)}`
+  let sortBy = ''
+  if (sort === 'desc') {
+    sortBy = 'vote_average.desc'
+  } else if (sort === 'asc') {
+    sortBy = 'vote_average.asc'
   }
-  // altfel url-ul ramane pagina principala 
-  else {
-    url = `${config.public.NUXT_PUBLIC_BASE_URL}movie/popular?api_key=${config.API_KEY}&language=en-US&page=1`
+
+  const baseUrl = 'https://api.themoviedb.org/3'
+  let url = ''
+  if (sortBy) {
+    url = `${baseUrl}/discover/movie?api_key=${config.API_KEY}&language=en-US&page=${page}&sort_by=${sortBy}`
+    if (genreId) {
+      url += `&with_genres=${genreId}`
+    }
+  } else {
+    url = `${baseUrl}/movie/popular?api_key=${config.API_KEY}&language=en-US&page=${page}`
+    if (genreId) {
+      url = `${baseUrl}/discover/movie?api_key=${config.API_KEY}&language=en-US&page=${page}&with_genres=${genreId}`
+    }
   }
 
   try {
