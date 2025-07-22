@@ -1,79 +1,124 @@
 <script lang="ts" setup>
-import type { SearchResults, SearchResult } from "~/types/types";
-import { ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import Pagination from "~/components/Pagination.vue";
+import { onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useMovieStore } from '~/composables/movieStore'
 
-const movies = ref<SearchResult[]>([]);
-const showCustomAlert = ref(false);
-const alertMessage = ref('');
-const isSearching = ref(false);
-const router = useRouter();
+const movieStore = useMovieStore()
+const { searchResults, searchQuery } = storeToRefs(movieStore)
 
-const currentPage = ref<number>(1);
-const totalPages = ref<number>(1);
-const totalResults = ref<number>(0);
-
-const isLoading = ref<boolean>(false);
-const error = ref<Error | null>(null);
-const sortOrder = ref<'none' | 'desc' | 'asc'>('none');
-
-async function fetchMovies(page: number) {
-  isLoading.value = true;
-  error.value = null;
-  try {
-    const apiUrl = `/api/movies?page=${page}&sort=${sortOrder.value}`;
-    const { data, error: fetchError } = await useFetch<SearchResults>(apiUrl);
-    if (fetchError.value) {
-      throw fetchError.value;
-    }
-    if (data.value) {
-      movies.value = data.value.results;
-      totalPages.value = data.value.total_pages;
-      totalResults.value = data.value.total_results;
-    }
-  } catch (err) {
-    error.value = err as Error;
-  } finally {
-    isLoading.value = false;
+const alertMessage = ref('')
+const showCustomAlert = ref(false)
+const page = ref(1)
+const loading = ref(false)
+const hasMore = ref(true)
+const isSearching = ref(false)
+const handleScroll = () => {
+  if (
+    window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
+    hasMore.value
+  ) {
+    fetchMovies()
   }
 }
 
-fetchMovies(currentPage.value);
-watch(currentPage, (newPage) => {
-  fetchMovies(newPage);
-});
+const fetchMovies = async (reset = false) => {
+  if (loading.value || !hasMore.value) return
+  loading.value = true
+  let url = ''
+  if (isSearching.value && searchQuery.value.trim()) {
+    url = `/api/search?query=${encodeURIComponent(searchQuery.value)}&page=${page.value}`
+  } else {
+    url = `/api/movies?page=${page.value}`
+  }
+  try {
+    const res = await fetch(url)
+    const data = await res.json()
+    if (reset) {
+      searchResults.value = []
+      page.value = 1
+      hasMore.value = true
+    }
+    if (data && data.results && Array.isArray(data.results)) {
+      if (data.results.length === 0 && isSearching.value) {
+        alertMessage.value = 'No results found. Going back to the front page!';
+        showCustomAlert.value = true;
+        setTimeout(() => { showCustomAlert.value = false }, 2500);
+        isSearching.value = false;
+        searchQuery.value = '';
+        page.value = 1;
+
+        const resPopular = await fetch(`/api/movies?page=1`);
+        const popularData = await resPopular.json();
+        searchResults.value = popularData.results || [];
+        hasMore.value = popularData.page < popularData.total_pages;
+        loading.value = false;
+        return;
+      }
+      searchResults.value.push(...data.results)
+      page.value += 1
+      hasMore.value = data.page < data.total_pages
+    } else {
+      hasMore.value = false
+    }
+  } catch (error) {
+    hasMore.value = false
+  }
+  loading.value = false
+}
+onMounted(() => {
+  fetchMovies()
+  window.addEventListener('scroll', handleScroll)
+  movieStore.searchMovies('', async () => {
+    const res = await fetch('/api/movies?page=1')
+    const data = await res.json()
+    return Array.isArray(data.results) ? data.results : []
+  })
+})
+
+// Watch for empty search results after a search
+watch([searchResults, searchQuery], async ([results, query]) => {
+  if (query && results.length === 0) {
+    alertMessage.value = 'No results found. Going back to the front page!';
+    showCustomAlert.value = true;
+    setTimeout(() => { showCustomAlert.value = false }, 2500);
+    // Reset search and show popular movies
+    await movieStore.searchMovies('', async () => {
+      const res = await fetch('/api/movies?page=1')
+      const data = await res.json()
+      return Array.isArray(data.results) ? data.results : []
+    })
+    movieStore.searchQuery = ''
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <template>
   <div>
+
     <transition name="fade">
       <div v-if="showCustomAlert" class="fixed left-1/2 top-8 transform -translate-x-1/2 z-50">
         <div
           class="bg-[#FF1E1E] text-white px-6 py-3 rounded-full shadow-lg text-lg font-semibold flex items-center gap-2 animate-bounce">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke-linecap="round"
-              stroke-linejoin="round" stroke-width="2" />
+            <path d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke-linecap="round" stroke-linejoin="round"
+                  stroke-width="2"/>
           </svg>
           {{ alertMessage }}
         </div>
       </div>
     </transition>
-
     <div class="grid grid-cols-2 gap-4 p-4 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3">
-      <div v-for="movie in movies" :key="movie.id">
-        <MovieCard :movie="movie" />
+      <div v-for="movie in searchResults" :key="movie.id">
+        <MovieCard :movie="movie"/>
       </div>
     </div>
-
-    <div class="p-4 flex justify-center">
-      <Pagination :currentPage="currentPage" :totalPages="totalPages" @update:currentPage="currentPage = $event" />
-    </div>
-    <div v-if="isLoading" class="text-center mt-4">Loading...</div>
-    <div v-if="error" class="text-center mt-4 text-red-600">Error: {{ error.message }}</div>
   </div>
 </template>
 
 <style scoped>
-/* your existing styles */
+
 </style>
