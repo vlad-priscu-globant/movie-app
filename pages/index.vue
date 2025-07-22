@@ -6,10 +6,68 @@ import { useMovieStore } from '~/composables/movieStore'
 const movieStore = useMovieStore()
 const { searchResults, searchQuery } = storeToRefs(movieStore)
 
-const showCustomAlert = ref(false)
 const alertMessage = ref('')
+const showCustomAlert = ref(false)
+const page = ref(1)
+const loading = ref(false)
+const hasMore = ref(true)
+const isSearching = ref(false)
+const handleScroll = () => {
+  if (
+    window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
+    hasMore.value
+  ) {
+    fetchMovies()
+  }
+}
 
+const fetchMovies = async (reset = false) => {
+  if (loading.value || !hasMore.value) return
+  loading.value = true
+  let url = ''
+  if (isSearching.value && searchQuery.value.trim()) {
+    url = `/api/search?query=${encodeURIComponent(searchQuery.value)}&page=${page.value}`
+  } else {
+    url = `/api/movies?page=${page.value}`
+  }
+  try {
+    const res = await fetch(url)
+    const data = await res.json()
+    if (reset) {
+      searchResults.value = []
+      page.value = 1
+      hasMore.value = true
+    }
+    if (data && data.results && Array.isArray(data.results)) {
+      if (data.results.length === 0 && isSearching.value) {
+        alertMessage.value = 'No results found. Going back to the front page!';
+        showCustomAlert.value = true;
+        setTimeout(() => { showCustomAlert.value = false }, 2500);
+        isSearching.value = false;
+        searchQuery.value = '';
+        page.value = 1;
+
+        const resPopular = await fetch(`/api/movies?page=1`);
+        const popularData = await resPopular.json();
+        searchResults.value = popularData.results || [];
+        hasMore.value = popularData.page < popularData.total_pages;
+        loading.value = false;
+        return;
+      }
+      searchResults.value.push(...data.results)
+      page.value += 1
+      hasMore.value = data.page < data.total_pages
+    } else {
+      hasMore.value = false
+    }
+  } catch (error) {
+    hasMore.value = false
+  }
+  loading.value = false
+}
 onMounted(() => {
+  fetchMovies()
+  window.addEventListener('scroll', handleScroll)
   movieStore.searchMovies('', async () => {
     const res = await fetch('/api/movies?page=1')
     const data = await res.json()
@@ -33,7 +91,9 @@ watch([searchResults, searchQuery], async ([results, query]) => {
   }
 })
 
-
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <template>
