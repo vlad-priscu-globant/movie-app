@@ -2,6 +2,8 @@
 import { onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useMovieStore } from '~/composables/movieStore'
+import type { SearchResults } from "~/types/types";
+import SkeletonMovieCard from '@/components/SkeletonMovieCard.vue'
 
 const movieStore = useMovieStore()
 const { searchResults, searchQuery } = storeToRefs(movieStore)
@@ -12,58 +14,45 @@ const page = ref(1)
 const loading = ref(false)
 const hasMore = ref(true)
 const isSearching = ref(false)
+const url = ref('')
+const { data, pending, refresh } = useFetch<SearchResults>(
+  url,
+  { server: false, immediate: false }
+)
 const handleScroll = () => {
   if (
     window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
     hasMore.value
   ) {
+
     fetchMovies()
   }
 }
 
-const fetchMovies = async (reset = false) => {
+watchEffect(() => {
+  if (!data.value) return
+  const res = data.value
+  page.value === 1
+    ? searchResults.value = res.results || []
+    : searchResults.value.push(...(res.results || []))
+  hasMore.value = res.page < res.total_pages
+  loading.value = false
+  page.value++
+})
+
+// 3) simplified fetchMovies
+const fetchMovies = () => {
   if (loading.value || !hasMore.value) return
   loading.value = true
-  let url = ''
   if (isSearching.value && searchQuery.value.trim()) {
-    url = `/api/search?query=${encodeURIComponent(searchQuery.value)}&page=${page.value}`
+    url.value = `/api/search?query=${encodeURIComponent(searchQuery.value)}&page=${page.value}`
   } else {
-    url = `/api/movies?page=${page.value}`
+    url.value = `/api/movies?page=${page.value}`
   }
-  try {
-    const res = await fetch(url)
-    const data = await res.json()
-    if (reset) {
-      searchResults.value = []
-      page.value = 1
-      hasMore.value = true
-    }
-    if (data && data.results && Array.isArray(data.results)) {
-      if (data.results.length === 0 && isSearching.value) {
-        alertMessage.value = 'No results found. Going back to the front page!';
-        showCustomAlert.value = true;
-        setTimeout(() => { showCustomAlert.value = false }, 2500);
-        isSearching.value = false;
-        searchQuery.value = '';
-        page.value = 1;
-
-        const resPopular = await fetch(`/api/movies?page=1`);
-        const popularData = await resPopular.json();
-        searchResults.value = popularData.results || [];
-        hasMore.value = popularData.page < popularData.total_pages;
-        loading.value = false;
-        return;
-      }
-      searchResults.value.push(...data.results)
-      page.value += 1
-      hasMore.value = data.page < data.total_pages
-    } else {
-      hasMore.value = false
-    }
-  } catch (error) {
+  refresh().catch(() => {
     hasMore.value = false
-  }
-  loading.value = false
+    loading.value = false
+  })
 }
 onMounted(() => {
   fetchMovies()
@@ -77,7 +66,7 @@ onMounted(() => {
 
 // Watch for empty search results after a search
 watch([searchResults, searchQuery], async ([results, query]) => {
-  if (query && results.length === 0) {
+  if (query && results?.length === 0) {
     alertMessage.value = 'No results found. Going back to the front page!';
     showCustomAlert.value = true;
     setTimeout(() => { showCustomAlert.value = false }, 2500);
@@ -98,7 +87,6 @@ onUnmounted(() => {
 
 <template>
   <div>
-
     <transition name="fade">
       <div v-if="showCustomAlert" class="fixed left-1/2 top-8 transform -translate-x-1/2 z-50">
         <div
@@ -112,9 +100,13 @@ onUnmounted(() => {
       </div>
     </transition>
     <div class="grid grid-cols-2 gap-4 p-4 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3">
-      <div v-for="movie in searchResults" :key="movie.id">
-        <MovieCard :movie="movie"/>
-      </div>
+      <SkeletonMovieCard
+        v-if="pending && searchResults.length === 0"
+        v-for="n in 20"
+        :key="`skeleton-init-${n}`"
+      />
+
+      <MovieCard v-else v-for="movie in searchResults" :key="movie.id" :movie="movie" />
     </div>
   </div>
 </template>
