@@ -14,6 +14,11 @@ const page = ref(1)
 const loading = ref(false)
 const hasMore = ref(true)
 const isSearching = ref(false)
+const url = ref('')
+const { data, pending, refresh } = useFetch<SearchResults>(
+  url,
+  { server: false, immediate: false }
+)
 const handleScroll = () => {
   if (
     window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
@@ -24,45 +29,30 @@ const handleScroll = () => {
   }
 }
 
-const fetchMovies = async () => {
+watchEffect(() => {
+  if (!data.value) return
+  const res = data.value
+  page.value === 1
+    ? searchResults.value = res.results || []
+    : searchResults.value.push(...(res.results || []))
+  hasMore.value = res.page < res.total_pages
+  loading.value = false
+  page.value++
+})
+
+// 3) simplified fetchMovies
+const fetchMovies = () => {
   if (loading.value || !hasMore.value) return
   loading.value = true
-  let url = ''
   if (isSearching.value && searchQuery.value.trim()) {
-    url = `/api/search?query=${encodeURIComponent(searchQuery.value)}&page=${page.value}`
+    url.value = `/api/search?query=${encodeURIComponent(searchQuery.value)}&page=${page.value}`
   } else {
-    url = `/api/movies?page=${page.value}`
+    url.value = `/api/movies?page=${page.value}`
   }
-  try {
-
-    const {data, pending, error} = await useLazyFetch<SearchResults>(url, {server: true})
-    searchResults.value = data.value.results as any;
-    if (data.value && data.value.results && Array.isArray(data.value.results)) {
-      if (data.value.results.length === 0 && isSearching.value) {
-        alertMessage.value = 'No results found. Going back to the front page!';
-        showCustomAlert.value = true;
-        setTimeout(() => { showCustomAlert.value = false }, 2500);
-        isSearching.value = false;
-        searchQuery.value = '';
-        page.value = 1;
-
-        const {data, pending, error} = await useLazyFetch(`/api/movies?page=1`, {server: false});
-        const popularData: SearchResults = data;
-        searchResults.value = popularData.results || [];
-        hasMore.value = popularData.page < popularData.total_pages;
-        loading.value = false;
-        return;
-      }
-      searchResults.value.push(...data.value.results)
-      page.value += 1
-      hasMore.value = data.value.page < data.value.total_pages
-    } else {
-      hasMore.value = false
-    }
-  } catch (error) {
+  refresh().catch(() => {
     hasMore.value = false
-  }
-  loading.value = false
+    loading.value = false
+  })
 }
 onMounted(() => {
   fetchMovies()
@@ -111,17 +101,12 @@ onUnmounted(() => {
     </transition>
     <div class="grid grid-cols-2 gap-4 p-4 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3">
       <SkeletonMovieCard
-        v-if="pending && movies.length === 0"
+        v-if="pending && searchResults.length === 0"
         v-for="n in 20"
         :key="`skeleton-init-${n}`"
       />
 
-      <MovieCard
-        v-else
-        v-for="movie in movies"
-        :key="movie.id"
-        :movie="movie"
-      />
+      <MovieCard v-else v-for="movie in searchResults" :key="movie.id" :movie="movie" />
     </div>
   </div>
 </template>
