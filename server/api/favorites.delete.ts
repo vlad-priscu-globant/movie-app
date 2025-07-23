@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
   const body = await readBody(event)
 
-  if (!body || !body.id) {
+  if (!body || !body.movie_id) {
     throw createError({ statusCode: 400, message: 'Missing movie ID' })
   }
 
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     .from('favorites')
     .select('id')
     .eq('user_id', user.id)
-    .eq('id', body.id)
+    .eq('movie_id', body.movie_id)
     .maybeSingle()
 
   if (!favorite) {
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   const { error } = await client
     .from('favorites')
     .delete()
-    .eq('id', body.id)
+    .eq('movie_id', body.movie_id)
     .eq('user_id', user.id)
 
   if (error) {
