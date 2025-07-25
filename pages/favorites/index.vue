@@ -55,6 +55,7 @@ const onFilterChange = ({ sortOrder: newSortOrder, genres }: { sortOrder: string
   </div>
 </template>
 
+
 <style scoped>
 
 </style>
