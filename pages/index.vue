@@ -5,6 +5,8 @@ import { useMovieStore } from '~/composables/movieStore'
 import type { SearchResults } from "~/types/types";
 import SkeletonMovieCard from '@/components/SkeletonMovieCard.vue'
 import Filtering from "~/components/filtering.vue";
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
 const movieStore = useMovieStore()
 const { searchResults, searchQuery } = storeToRefs(movieStore)
@@ -94,9 +96,22 @@ watch([searchResults, searchQuery], async ([results, query]) => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
+
+function goToRoulette() {
+  router.push('/roulette')
+}
 </script>
 
 <template>
+     <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold text-white">Latest Movies</h1>
+      <button
+        @click="goToRoulette"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
+      >
+        Go to Movie Roulette 🎲
+      </button>
+    </div>
   <div>
     <Filtering @filterChange="onFilterChange" />
     <transition name="fade">
@@ -121,6 +136,8 @@ onUnmounted(() => {
       <MovieCard v-else v-for="movie in searchResults" :key="movie.id" :movie="movie" />
     </div>
   </div>
+ 
+  
 </template>
 
 <style scoped>
