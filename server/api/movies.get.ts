@@ -9,6 +9,10 @@ export default defineEventHandler(async (event) => {
     sortBy = 'vote_average.desc'
   } else if (sort === 'asc') {
     sortBy = 'vote_average.asc'
+  } else if (sort === 'recent') {
+    sortBy = 'release_date.desc'
+  } else if (sort === 'old') {
+    sortBy = 'release_date.asc'
   }
 
   const baseUrl = 'https://api.themoviedb.org/3'

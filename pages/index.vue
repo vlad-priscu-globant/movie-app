@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useMovieStore } from '~/composables/movieStore'
 import type { SearchResults } from "~/types/types";
 import SkeletonMovieCard from '@/components/SkeletonMovieCard.vue'
+import Filtering from "~/components/filtering.vue";
 
 const movieStore = useMovieStore()
 const { searchResults, searchQuery } = storeToRefs(movieStore)
@@ -15,6 +16,8 @@ const loading = ref(false)
 const hasMore = ref(true)
 const isSearching = ref(false)
 const url = ref('')
+const sortOrder = ref('')
+const selectedGenre = ref(0)
 const { data, pending, refresh } = useFetch<SearchResults>(
   url,
   { server: false, immediate: false }
@@ -24,7 +27,6 @@ const handleScroll = () => {
     window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
     hasMore.value
   ) {
-
     fetchMovies()
   }
 }
@@ -40,20 +42,31 @@ watchEffect(() => {
   page.value++
 })
 
-// 3) simplified fetchMovies
 const fetchMovies = () => {
   if (loading.value || !hasMore.value) return
   loading.value = true
   if (isSearching.value && searchQuery.value.trim()) {
     url.value = `/api/search?query=${encodeURIComponent(searchQuery.value)}&page=${page.value}`
   } else {
-    url.value = `/api/movies?page=${page.value}`
+    let genreParam = selectedGenre.value !== 0 ? `&genreId=${selectedGenre.value}` : ''
+    let sortParam = sortOrder.value ? `&sort=${sortOrder.value}` : ''
+    url.value = `/api/movies?page=${page.value}${genreParam}${sortParam}`
   }
   refresh().catch(() => {
     hasMore.value = false
     loading.value = false
   })
 }
+
+const onFilterChange = ({ sortOrder: newSortOrder, genres }: { sortOrder: string; genres: number[] }) => {
+  sortOrder.value = newSortOrder
+  selectedGenre.value = genres[0] || 0
+  page.value = 1
+  hasMore.value = true
+  searchResults.value = []
+  fetchMovies()
+}
+
 onMounted(() => {
   fetchMovies()
   window.addEventListener('scroll', handleScroll)
@@ -64,13 +77,11 @@ onMounted(() => {
   })
 })
 
-// Watch for empty search results after a search
 watch([searchResults, searchQuery], async ([results, query]) => {
   if (query && results?.length === 0) {
     alertMessage.value = 'No results found. Going back to the front page!';
     showCustomAlert.value = true;
     setTimeout(() => { showCustomAlert.value = false }, 2500);
-    // Reset search and show popular movies
     await movieStore.searchMovies('', async () => {
       const res = await fetch('/api/movies?page=1')
       const data = await res.json()
@@ -87,6 +98,7 @@ onUnmounted(() => {
 
 <template>
   <div>
+    <Filtering @filterChange="onFilterChange" />
     <transition name="fade">
       <div v-if="showCustomAlert" class="fixed left-1/2 top-8 transform -translate-x-1/2 z-50">
         <div
