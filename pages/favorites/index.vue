@@ -4,10 +4,22 @@ import MovieCard from "~/components/MovieCard.vue";
 import Filtering from "~/components/filtering.vue";
 import SkeletonMovieCard from "~/components/SkeletonMovieCard.vue";
 import { ref, watchEffect, computed } from "vue";
+import Pagination from "~/components/Pagination.vue";
 
 definePageMeta({
   middleware: 'auth'
 })
+const currentPage = ref(1);
+const itemsPerPage = 20;
+const totalPages = computed(() =>
+  Math.ceil(movies.value.length / itemsPerPage)
+);
+
+const paginatedMovies = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return movies.value.slice(start, end);
+});
 const nuxtApp = useNuxtApp()
 const isServer = computed(() => !!nuxtApp.ssrContext)
 const movies = ref<any[]>([])
@@ -48,6 +60,7 @@ const applyFilter = () => {
     )
   }
   movies.value = filtered
+  currentPage.value = 1;
 }
 
 function onFilterChange(filters: { sortOrder: string; genres: number[] }) {
@@ -68,11 +81,16 @@ function onFilterChange(filters: { sortOrder: string; genres: number[] }) {
       />
       <MovieCard
         v-else
-        v-for="movie in movies"
+        v-for="movie in paginatedMovies"
         :key="movie.id"
         :movie="movie.movie_data"
       />
     </div>
+    <Pagination
+      :currentPage="currentPage"
+      :totalPages="totalPages"
+      @update:currentPage="(page) => currentPage = page"
+    />
   </div>
 </template>
 
