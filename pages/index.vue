@@ -135,8 +135,6 @@ function goToRoulette() {
 
       <MovieCard v-else v-for="movie in searchResults" :key="movie.id" :movie="movie" />
     </div>
-      <div class="p-6">
-        </div>
   </div>
  
   

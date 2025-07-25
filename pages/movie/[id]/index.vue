@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 import type { SearchResult } from "~/types/types";
+import SkeletonDetailCard from '@/components/SkeletonDetailCard.vue'
 
 const route = useRoute()
 
 const movie = ref<SearchResult | null>(null)
 
 
-const {data, error, pending} = await useFetch<SearchResult>('/api/movie/' + route.params.id)
-
+const {data, error, pending} = await useLazyFetch<SearchResult>('/api/movie/' + route.params.id)
+{ server: false }
 watchEffect(() => {
   if (data.value) {
     movie.value = data.value
@@ -19,7 +20,8 @@ watchEffect(() => {
 
 <template>
   <div class="max-w-5xl mx-auto mt-8">
-    <div v-if="movie" class="flex flex-col md:flex-row gap-6">
+    <SkeletonDetailCard v-if="pending" />
+    <div v-else-if="movie" class="flex flex-col md:flex-row gap-6">
       <img
         :alt="movie.title"
         :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`"
@@ -33,7 +35,6 @@ watchEffect(() => {
         <FavoriteMovie v-if="movie" :movie="movie" :readOnly="false"></FavoriteMovie>
       </div>
     </div>
-    <p v-else class="text-center mt-20 text-gray-400">Loading...</p>
   </div>
 </template>
 
