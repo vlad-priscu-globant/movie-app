@@ -11,38 +11,14 @@ const alertMessage = ref('')
 const router = useRouter()
 
 async function handleSearch(query: string) {
-  await movieStore.searchMovies(query, async (q: string) => {
-    const url = q ? `/api/movies?query=${encodeURIComponent(q)}` : '/api/movies?page=1'
-    const res = await fetch(url)
-    const data = await res.json()
-    return Array.isArray(data.results) ? data.results : []
-  })
-  if (query && movieStore.searchResults?.length === 0) {
-    alertMessage.value = 'No results found. Going back to the front page!';
-    showCustomAlert.value = true;
-    setTimeout(() => {
-      showCustomAlert.value = false;
-      router.push('/')
-    }, 2500);
-    await movieStore.searchMovies('', async () => {
-      const res = await fetch('/api/movies?page=1')
-      const data = await res.json()
-      return Array.isArray(data.results) ? data.results : []
-    })
-    searchQuery.value = ''
-  }
+  searchQuery.value = query
 }
 
 async function handleClear() {
-  movieStore.clearSearch()
+  searchQuery.value = ''
   alertMessage.value = ''
   showCustomAlert.value = false
   router.push('/')
-  await movieStore.searchMovies('', async () => {
-    const res = await fetch('/api/movies?page=1')
-    const data = await res.json()
-    return Array.isArray(data.results) ? data.results : []
-  })
 }
 </script>
 <template>
