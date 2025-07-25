@@ -12,22 +12,15 @@ export default defineEventHandler(async (event) => {
   if (!genreId) {
     throw createError({ statusCode: 400, statusMessage: 'Missing genreId in query' })
   }
-
-  const config = useRuntimeConfig()
-  const apiKey = config.API_KEY
-
-  console.log('🔍 [DEBUG] TMDB API Key:', apiKey ? '[OK]' : '[MISSING]')
-
-  if (!apiKey) {
-    throw createError({ statusCode: 500, statusMessage: 'TMDB API key missing. Check .env setup.' })
-  }
+const config = useRuntimeConfig()
+const apiKey = config.API_KEY
 
   const randomPage = Math.floor(Math.random() * 10) + 1
 
   try {
     const response = await $fetch<any>('https://api.themoviedb.org/3/discover/movie', {
       headers: {
-        Authorization: `Bearer ${apiKey}` // ✅ Bearer auth for v4 token
+        Authorization: `Bearer ${apiKey}`
       },
       query: {
         with_genres: genreId,
@@ -51,7 +44,7 @@ export default defineEventHandler(async (event) => {
       title: randomMovie.title,
       overview: randomMovie.overview,
       poster: randomMovie.poster_path
-        ? config.public.tmdbImageBase + randomMovie.poster_path
+        ? config.public.TMDB_IMAGE_BASE + randomMovie.poster_path
         : null
     }
   } catch (err: any) {

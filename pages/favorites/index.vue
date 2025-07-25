@@ -1,60 +1,80 @@
 <script lang="ts" setup>
-import { ref, watchEffect } from 'vue'
-import { useFetch } from "#app";
-import type { SearchResult } from "~/types/types";
+import { useFetch, useNuxtApp } from "#app";
 import MovieCard from "~/components/MovieCard.vue";
 import Filtering from "~/components/filtering.vue";
+import SkeletonMovieCard from "~/components/SkeletonMovieCard.vue";
+import { ref, watchEffect, computed } from "vue";
 
 definePageMeta({
   middleware: 'auth'
 })
-const movies = ref<SearchResult[] | []>([])
-const filteredMovies = ref<SearchResult[] | []>([])
-const sortOrder = ref('')
+const nuxtApp = useNuxtApp()
+const isServer = computed(() => !!nuxtApp.ssrContext)
+const movies = ref<any[]>([])
+const allMovies = ref<any[]>([])
+const sortOrder = ref('desc')
 const selectedGenre = ref(0)
-
-const { data: favoritesData } = await useFetch<any>('/api/favorites')
-
-watchEffect(() => {
-  if (favoritesData.value) {
-    movies.value = favoritesData.value
+const pending = ref(true)
+const fetchFavorites = async () => {
+  const url = `/api/movie/favorites?sort=${sortOrder.value}`
+  pending.value = true
+  const { data, error } = await useFetch<any[]>(url)
+  pending.value = false
+  if (error.value) {
+    console.error('Failed to fetch favorite movies:', error.value)
+    allMovies.value = []
+    movies.value = []
+    return
+  }
+  if (data.value) {
+    allMovies.value = data.value
     applyFilter()
   }
+}
+
+watch([sortOrder], () => {
+  fetchFavorites()
 })
 
-const applyFilter = async () => {
-  let genreParam = selectedGenre.value !== 0 ? `&genreId=${selectedGenre.value}` : ''
-  let sortParam = sortOrder.value ? `&sort=${sortOrder.value}` : ''
-  const { data: filteredData } = await useFetch<any>(`/api/movies?page=1${genreParam}${sortParam}`)
-    if (filteredData.value && Array.isArray(filteredData.value.results)) {
-      // Filter movies to only those in favorites
-      const favoriteIds = new Set(movies.value.map(m => m.id))
-      filteredMovies.value = filteredData.value.results.filter((movie: any) => favoriteIds.has(movie.id))
-    } else {
-      filteredMovies.value = []
-    }
+watchEffect(() => {
+  fetchFavorites()
+})
+
+const applyFilter = () => {
+  let filtered = allMovies.value
+  if (selectedGenre.value !== 0) {
+    filtered = filtered.filter(movie =>
+      movie.movie_data.genres.some((genre: any) => genre.id === selectedGenre.value)
+    )
+  }
+  movies.value = filtered
 }
 
-const onFilterChange = ({ sortOrder: newSortOrder, genres }: { sortOrder: string; genres: number[] }) => {
-  sortOrder.value = newSortOrder
-  selectedGenre.value = genres[0] || 0
-  applyFilter()
+function onFilterChange(filters: { sortOrder: string; genres: number[] }) {
+  sortOrder.value = filters.sortOrder
+  selectedGenre.value = filters.genres[0] || 0
 }
-
 </script>
 
 <template>
   <div>
     <h1>Favorite movies</h1>
     <Filtering @filterChange="onFilterChange" />
-    <div
-      v-for="movie in filteredMovies" :key="movie.id"
-      class="grid grid-cols-2 gap-4 p-4 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3">
-      <MovieCard :movie="movie" />
+    <div class="grid grid-cols-2 gap-4 p-4 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3">
+      <SkeletonMovieCard
+        v-if="pending && movies.length === 0"
+        v-for="n in 20"
+        :key="`skeleton-fav-${n}`"
+      />
+      <MovieCard
+        v-else
+        v-for="movie in movies"
+        :key="movie.id"
+        :movie="movie.movie_data"
+      />
     </div>
   </div>
 </template>
-
 
 <style scoped>
 
