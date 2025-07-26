@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await client
     .from('favorites')
-    .select('*')
+    .select('movie_id, movie_data, status, rating')
     .eq('user_id', user.id)
 
   if (error) {

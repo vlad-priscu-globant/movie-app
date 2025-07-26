@@ -5,7 +5,7 @@ export default defineEventHandler(async(event) => {
   const user = await getAuthenticatedUser(event);
   const client = await serverSupabaseClient<any>(event)
   const body = await readBody(event)
-  const { movie_id, movie_data } = body || {}
+  const { movie_id, movie_data, status, rating } = body || {}
   if(!movie_id || !movie_data) {
     throw createError({ statusCode: 400, message: 'Missing movie_id or movie_data' })
   }
@@ -43,6 +43,8 @@ export default defineEventHandler(async(event) => {
     user_id: user.id,
     movie_id,
     movie_data,
+    status,
+    rating,
   })
 
   if (error) {

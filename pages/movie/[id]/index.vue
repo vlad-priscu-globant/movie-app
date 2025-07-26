@@ -21,11 +21,11 @@ watchEffect(() => {
 <template>
   <div class="max-w-5xl mx-auto mt-8">
     <SkeletonDetailCard v-if="pending" />
-    <div v-else-if="movie" class="flex flex-col md:flex-row gap-6">
+    <div v-else-if="movie" class="flex flex-col md:flex-row gap-6 md:items-start">
       <img
         :alt="movie.title"
         :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`"
-        class="rounded w-full md:w-1/3 aspect-[2/3] object-cover"
+        class="rounded w-full md:w-2/5 shrink-0 aspect-[2/3] object-cover"
         loading="lazy"
       />
       <div>
