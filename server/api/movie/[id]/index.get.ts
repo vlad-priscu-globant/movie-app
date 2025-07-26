@@ -1,11 +1,12 @@
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const id = event.context.params?.id
-  const url = `${config.public.NUXT_PUBLIC_BASE_URL}/movie/${id}`
+  const baseUrl = 'https://api.themoviedb.org/3'
+  const url = `${baseUrl}/movie/${id}?append_to_response=videos`
   try {
     const movie = await $fetch(url, {
       headers: {
-        Authorization: `Bearer ${config.API_KEY}`, Accept: 'application/json', 'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.API_KEY}`, Accept: 'application/json',
       }
     })
     return movie
